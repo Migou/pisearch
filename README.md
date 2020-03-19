@@ -13,6 +13,7 @@ For starters :
 2) Update FILEDATPATTERN constant to chose a destination folder
 3) Execute the program in order to create a database in the .dat format
    > pi_search create/create2 <files>
+
    Using 'create' for an ascii input format and 'create2' for a compressed
    input format
 4) Help yourself, have fun with your database, perform searches :
@@ -40,3 +41,16 @@ pi_search read2 files : shows the whole stored pi digits, 12 digits per line, re
 REM gdb autolaunch :
   if you still have the codefile pi_search.c, executing <<./pi_search.c gdb [search|create2|help] args...>> will launch the gdb debugger
   (head -n 18 pi_search.c for more details)
+
+==HOWTO RUN IT==
+
+Required : set constant FILEDATPATTERN to something apropriate (inside source code)
+
+> gcc pi_search.c
+> chmod 755 a.out
+> ./a.out
+
+For fun, you might also like to use the "autocompile" functionality included into pi_search.c
+
+> chmod 755 pi_search.c
+> ./pi_search.c
