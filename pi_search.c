@@ -838,35 +838,35 @@ struct check make_check(int i1, int i2, int i3, int offset_db_relatif)
 }
 
 // retrieves a number between 0 and 999 inluded, located inside th long int at the offset given by the mask
-int check_get_triplet(struct check check_cour,long int num)
+int check_get_triplet(struct check cur_check,long int num)
 {
   // ugly trick to find the offset back. maybe not optimized, but it's not used by the 'normal' check case
   int offset;
-  if(check_cour.mask == 0x3ff){ offset=0; }
-  else if(check_cour.mask  == 0x0ffc00){ offset=1; }
-  else if(check_cour.mask  == 0x03ff00000){ offset=2; }
-  else if(check_cour.mask  == 0x0ffc0000000){ offset=3; }
+  if(cur_check.mask == 0x3ff){ offset=0; }
+  else if(cur_check.mask  == 0x0ffc00){ offset=1; }
+  else if(cur_check.mask  == 0x03ff00000){ offset=2; }
+  else if(cur_check.mask  == 0x0ffc0000000){ offset=3; }
   else{
     die("fatal error due to a rotten stub code\n",669);
   }
 
-  return (int)(  (num & check_cour.mask) >> (10*offset)  );
+  return (int)(  (num & cur_check.mask) >> (10*offset)  );
 }
 
-int check_match(struct check check_cour,long int num)
+int check_match(struct check cur_check,long int num)
 {
   struct checkbeg* pcheck; // required for casting the check...
   long int val; // for the 'end' case
-  switch(check_cour.type)
+  switch(cur_check.type)
   {
     case normal :
-      return (num & check_cour.mask) == check_cour.min_value; // this is the case first tested (for any digit string longer than 4) and rejected 999 times on 1000 => This is the key part of this program, it MUST be as optimized  as possible.
+      return (num & cur_check.mask) == cur_check.min_value; // this is the case first tested (for any digit string longer than 4) and rejected 999 times on 1000 => This is the key part of this program, it MUST be as optimized  as possible.
       
     case beg :
       // retrieve units / tens and compare
-      pcheck = (struct checkbeg*)&check_cour;
+      pcheck = (struct checkbeg*)&cur_check;
 
-      int triplet = check_get_triplet(check_cour,num);
+      int triplet = check_get_triplet(cur_check,num);
       
       if( pcheck->nbdigits == 1)
 	{	  
@@ -882,8 +882,8 @@ int check_match(struct check check_cour,long int num)
 	}
       
     case end:
-      val=num & check_cour.mask;      
-      return check_cour.min_value <= val && val <= check_cour.max_value;
+      val=num & cur_check.mask;      
+      return cur_check.min_value <= val && val <= cur_check.max_value;
       
     case noop:
       return 1;
@@ -893,14 +893,14 @@ int check_match(struct check check_cour,long int num)
     }
 }
 
-int check_nextnumberneeded(struct check check_cour)
+int check_nextnumberneeded(struct check cur_check)
 {
-  return check_cour.type==normal && (check_cour.mask & 0x01); // if the mask's 1 bits reach the last bit, we are at the end of the blob and we must get the next blob.
+  return cur_check.type==normal && (cur_check.mask & 0x01); // if the mask's 1 bits reach the last bit, we are at the end of the blob and we must get the next blob.
 }
 
-int check_previousnumberneeded(struct check check_cour)
+int check_previousnumberneeded(struct check cur_check)
 {
-  return check_cour.mask & 0x01; // if the mask (of the previous struct check) reaches the last bit, 
+  return cur_check.mask & 0x01; // if the mask (of the previous struct check) reaches the last bit, 
   // this means the previous check has to be tested on the previous blob...
 }
 
@@ -932,16 +932,16 @@ int compare2(long int i12digits,class_fileiterator fi)
   {
     int report_fail=0; // debug
     int step_check=1; // NB : the algorithm is defined so that step_check=0 is an empty or uncomplete check (less than 3 digits)   
-    struct check check_cour;// = checks[i_check][step_check];
+    struct check cur_check;// = checks[i_check][step_check];
 
     int check_failed=0;
     long int i12digits_cour = i12digits;
     do
     {
-      check_cour = checks[i_check][step_check];
+      cur_check = checks[i_check][step_check];
 
       // current verification
-      if( ! check_match(check_cour,blob) )
+      if( ! check_match(cur_check,blob) )
       {
 	check_failed=1;
 	#ifdef DEBUG
@@ -958,7 +958,7 @@ int compare2(long int i12digits,class_fileiterator fi)
       }
 
       // preparing the next verification
-      if( check_nextnumberneeded(check_cour) ) 
+      if( check_nextnumberneeded(cur_check) ) 
       {
 	blob = get(++i12digits_cour,fi);
 	#ifdef DEBUG
@@ -969,10 +969,10 @@ int compare2(long int i12digits,class_fileiterator fi)
 
       }
 
-      if( check_cour.type != normal ) break ; // end of verification
+      if( cur_check.type != normal ) break ; // end of verification
       
       step_check++;
-      check_cour = checks[i_check][step_check];	
+      cur_check = checks[i_check][step_check];	
     }
     while( (!check_failed) && step_check < nbtripletsmax );
     
